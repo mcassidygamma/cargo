@@ -33,6 +33,8 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Vector;
 
 import org.apache.tools.ant.filters.util.ChainReaderHelper;
@@ -47,6 +49,11 @@ import org.codehaus.cargo.util.log.LoggedObject;
  */
 public final class ResourceUtils extends LoggedObject
 {
+    /**
+     * Size of the buffers / chunks used when copying resources.
+     */
+    private static final int BUFFER_CHUNK_SIZE = 256 * 1024;
+
     /**
      * Default file handler for the @link{ResourceUtils#copyResource(String, File)} and
      * @link{ResourceUtils#copyResource(String, File, FilterChain)} methods.
@@ -133,7 +140,7 @@ public final class ResourceUtils extends LoggedObject
      * @throws IOException If an I/O error occurs while copying the resource
      */
     public void copyResource(String resourceName, File destFile, FilterChain filterChain,
-        String encoding) throws IOException
+        Charset encoding) throws IOException
     {
         copyResource(resourceName, destFile.getPath(), defaultFileHandler, filterChain, encoding);
     }
@@ -152,7 +159,7 @@ public final class ResourceUtils extends LoggedObject
      * @throws IOException If an I/O error occurs while copying the resource
      */
     public void copyResource(String resourceName, String destFile, FileHandler handler,
-        FilterChain filterChain, String encoding) throws IOException
+        FilterChain filterChain, Charset encoding) throws IOException
     {
         InputStream resource = ResourceUtils.resourceLoader.getResourceAsStream(resourceName);
         if (resource == null)
@@ -162,7 +169,7 @@ public final class ResourceUtils extends LoggedObject
         }
 
         ChainReaderHelper helper = new ChainReaderHelper();
-        helper.setBufferSize(8192);
+        helper.setBufferSize(ResourceUtils.BUFFER_CHUNK_SIZE);
         helper.setPrimaryReader(new BufferedReader(createReader(resource, encoding)));
         Vector filterChains = new Vector();
         filterChains.add(filterChain);
@@ -190,13 +197,14 @@ public final class ResourceUtils extends LoggedObject
 
     /**
      * Creates a new InputStreamReader with provide encoding
+     * 
      * @param is the stream used to create the reader
      * @param encoding the encoding used to create the reader. If it is <code>null</code> then the
      * default system encoding will be used.
      * @return a new reader for provided stream and encoding
      * @throws UnsupportedEncodingException If the named charset is not supported
      */
-    private InputStreamReader createReader(InputStream is, String encoding)
+    private InputStreamReader createReader(InputStream is, Charset encoding)
         throws UnsupportedEncodingException
     {
         InputStreamReader r;
@@ -213,11 +221,6 @@ public final class ResourceUtils extends LoggedObject
 
     /**
      * Search for the given resource and return the directory or archive that contains it.
-     * 
-     * <p>
-     * Doesn't work for archives in JDK 1.1 as the URL returned by getResource doesn't contain the
-     * name of the archive.
-     * </p>
      * 
      * @param where Class where to look for the resource (its class loader and parent class loaders
      * are used recursively for the lookup).
@@ -238,13 +241,31 @@ public final class ResourceUtils extends LoggedObject
         {
             int pling = urlString.indexOf("!");
             String jar = urlString.substring(9, pling);
-            file = new File(URLDecoder.decode(jar));
+            // TODO: URLDecoder.decode(String, Charset) was introduced in Java 10,
+            //       simplify the below code when Codehaus Cargo is on Java 10+
+            try
+            {
+                file = new File(URLDecoder.decode(jar, StandardCharsets.UTF_8.name()));
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                throw new IllegalStateException("UTF-8 encoding is missing", e);
+            }
         }
         else if (urlString.startsWith("file:"))
         {
             int tail = urlString.indexOf(resourceName);
             String dir = urlString.substring(5, tail);
-            file = new File(URLDecoder.decode(dir));
+            // TODO: URLDecoder.decode(String, Charset) was introduced in Java 10,
+            //       simplify the below code when Codehaus Cargo is on Java 10+
+            try
+            {
+                file = new File(URLDecoder.decode(dir, StandardCharsets.UTF_8.name()));
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                throw new IllegalStateException("UTF-8 encoding is missing", e);
+            }
         }
 
         getLogger().debug("Location for [" + resourceName + "] is [" + file + "]",
@@ -258,14 +279,14 @@ public final class ResourceUtils extends LoggedObject
      * as String.
      * 
      * @param resourceName The name of the resource, relative to the
-     * org.codehaus.cargo.container.internal.util package
+     * <code>org.codehaus.cargo.container.internal.util</code> package
      * @param filterChain The ordered list of filter readers that should be applied while reading
      * @param encoding The encoding that should be used when reading the resource. Use null for
      * system default encoding
      * @return Content of resource as String.
      * @throws IOException If an I/O error occurs while reading the resource
      */
-    public String readResource(String resourceName, FilterChain filterChain, String encoding)
+    public String readResource(String resourceName, FilterChain filterChain, Charset encoding)
         throws IOException
     {
         String newLine = System.getProperty("line.separator");

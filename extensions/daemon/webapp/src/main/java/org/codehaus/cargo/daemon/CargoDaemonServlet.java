@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -78,6 +79,10 @@ import org.json.simple.JSONValue;
  */
 public class CargoDaemonServlet extends HttpServlet implements Runnable
 {
+    /**
+     * The charset to use when decoding Cargo daemon responses.
+     */
+    private static final String DAEMON_SERVLET_CHARSET = StandardCharsets.UTF_8.name();
 
     /**
      * The periodic amount of milliseconds between checking if containers are still alive.
@@ -155,7 +160,7 @@ public class CargoDaemonServlet extends HttpServlet implements Runnable
         StringBuilder indexPageBuilder = new StringBuilder();
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-            this.getServletContext().getResourceAsStream("/index.html"), "UTF-8")))
+            this.getServletContext().getResourceAsStream("/index.html"), StandardCharsets.UTF_8)))
         {
             for (String line = reader.readLine(); line != null; line = reader.readLine())
             {
@@ -364,7 +369,7 @@ public class CargoDaemonServlet extends HttpServlet implements Runnable
                 long filesize = fileManager.getFileSize(logFilePath);
 
                 response.setContentType("text/html");
-                response.setCharacterEncoding("UTF-8");
+                response.setCharacterEncoding(CargoDaemonServlet.DAEMON_SERVLET_CHARSET);
                 response.setHeader("X-Text-Size", String.valueOf(filesize));
 
                 ServletOutputStream outputStream = response.getOutputStream();
@@ -451,7 +456,7 @@ public class CargoDaemonServlet extends HttpServlet implements Runnable
                 throw new ServletException(e);
             }
             response.setContentType("text/html");
-            response.setCharacterEncoding("UTF-8");
+            response.setCharacterEncoding(CargoDaemonServlet.DAEMON_SERVLET_CHARSET);
             response.getWriter().print(indexPage);
         }
         else

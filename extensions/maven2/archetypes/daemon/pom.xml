@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.codehaus.cargo</groupId>
     <artifactId>cargo-maven2-archetypes</artifactId>
-    <version>1.7.14-SNAPSHOT</version>
+    <version>1.7.16-SNAPSHOT</version>
   </parent>
   <artifactId>cargo-archetype-daemon</artifactId>
   <packaging>maven-archetype</packaging>
@@ -77,7 +77,7 @@
               <artifactInstaller>
                 <groupId>org.apache.tomcat</groupId>
                 <artifactId>tomcat</artifactId>
-                <version>8.5.56</version>
+                <version>8.5.57</version>
               </artifactInstaller>
             </container>
             <configuration>

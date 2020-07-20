@@ -25,6 +25,8 @@ import org.codehaus.cargo.container.LocalContainer;
 import org.codehaus.cargo.container.configuration.LocalConfiguration;
 import org.custommonkey.xmlunit.XMLAssert;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Tests for the Tomcat 6 implementation of StandaloneLocalConfigurationTest
  */
@@ -98,7 +100,7 @@ public class Tomcat6xStandaloneLocalConfigurationTest extends
         configuration.configure(container);
 
         String config = configuration.getFileHandler().readTextFile(
-                configuration.getHome() + "/conf/server.xml", "UTF-8");
+                configuration.getHome() + "/conf/server.xml", StandardCharsets.UTF_8);
         XMLAssert.assertXpathNotExists(
                 "//Server/Service/Connector[@port='8080']/@protocol", config);
     }
@@ -115,8 +117,47 @@ public class Tomcat6xStandaloneLocalConfigurationTest extends
         configuration.configure(container);
 
         String config = configuration.getFileHandler().readTextFile(
-                configuration.getHome() + "/conf/server.xml", "UTF-8");
+                configuration.getHome() + "/conf/server.xml", StandardCharsets.UTF_8);
         XMLAssert.assertXpathEvaluatesTo("org.apache.coyote.http11.Http11NioProtocol",
                 "//Server/Service/Connector[@port='8080']/@protocol", config);
+    }
+
+    /**
+     * Assert that the attribute 'protocol' is overidden with the property's APR implementation
+     * value.
+     * @throws Exception If anything does wrong.
+     */
+    public void testConfigureSetsAprConnectorProtocol() throws Exception
+    {
+        configuration.setProperty(TomcatPropertySet.CONNECTOR_PROTOCOL_CLASS,
+                "org.apache.coyote.http11.Http11AprProtocol");
+
+        configuration.configure(container);
+
+        String config = configuration.getFileHandler().readTextFile(
+                configuration.getHome() + "/conf/server.xml", StandardCharsets.UTF_8);
+        XMLAssert.assertXpathEvaluatesTo("org.apache.coyote.http11.Http11AprProtocol",
+                "//Server/Service/Connector[@port='8080']/@protocol", config);
+    }
+
+    /**
+     * Assert that the attribute 'protocol' is overidden with the property's APR implementation
+     * value, when setting any Tomcat 5+ optional xml replacements.
+     * @throws Exception If anything does wrong.
+     */
+    public void testConfigurationSetsAprConnectorProtocolWithSslProtocol() throws Exception
+    {
+        configuration.setProperty(TomcatPropertySet.CONNECTOR_PROTOCOL_CLASS,
+                "org.apache.coyote.http11.Http11AprProtocol");
+        configuration.setProperty(TomcatPropertySet.CONNECTOR_SSL_PROTOCOL, "TLSv1.2");
+
+        configuration.configure(container);
+
+        String config = configuration.getFileHandler().readTextFile(
+                configuration.getHome() + "/conf/server.xml", StandardCharsets.UTF_8);
+        XMLAssert.assertXpathEvaluatesTo("org.apache.coyote.http11.Http11AprProtocol",
+                "//Server/Service/Connector[@port='8080']/@protocol", config);
+        XMLAssert.assertXpathEvaluatesTo("TLSv1.2",
+                "//Server/Service/Connector[@port='8080']/@sslProtocol", config);
     }
 }

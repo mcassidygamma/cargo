@@ -28,6 +28,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -45,11 +47,6 @@ public class TomcatManager extends LoggedObject
      * cache of nonce values seen
      */
     private static final NonceCounter NONCE_COUNTER = new NonceCounter();
-
-    /**
-     * The charset to use when decoding Tomcat manager responses.
-     */
-    private static final String MANAGER_CHARSET = "UTF-8";
 
     /**
      * Size of the buffers / chunks used when sending files to Tomcat.
@@ -72,7 +69,11 @@ public class TomcatManager extends LoggedObject
     private String password;
 
     /**
-     * The URL encoding charset to use when communicating with Tomcat manager.
+     * The URL encoding charset to use when communicating with Tomcat manager.<br>
+     * <br>
+     * <b>TODO</b>: {@link URLEncoder#encode(java.lang.String, java.nio.charset.Charset)}
+     * was introduced in Java 10, switch the below type to {@link Charset} when Codehaus Cargo is
+     * on Java 10+.
      */
     private String charset;
 
@@ -87,31 +88,8 @@ public class TomcatManager extends LoggedObject
     private int timeout = 0;
 
     /**
-     * Creates a Tomcat manager wrapper for the specified URL that uses a username of
-     * <code>admin</code>, an empty password and ISO-8859-1 URL encoding.
-     * 
-     * @param url the full URL of the Tomcat manager instance to use
-     */
-    public TomcatManager(URL url)
-    {
-        this(url, "admin");
-    }
-
-    /**
-     * Creates a Tomcat manager wrapper for the specified URL and username that uses an empty
-     * password and ISO-8859-1 URL encoding.
-     * 
-     * @param url the full URL of the Tomcat manager instance to use
-     * @param username the username to use when authenticating with Tomcat manager
-     */
-    public TomcatManager(URL url, String username)
-    {
-        this(url, username, "");
-    }
-
-    /**
      * Creates a Tomcat manager wrapper for the specified URL, username and password that uses
-     * ISO-8859-1 URL encoding.
+     * UTF-8 URL encoding.
      * 
      * @param url the full URL of the Tomcat manager instance to use
      * @param username the username to use when authenticating with Tomcat manager
@@ -119,7 +97,7 @@ public class TomcatManager extends LoggedObject
      */
     public TomcatManager(URL url, String username, String password)
     {
-        this(url, username, password, "ISO-8859-1");
+        this(url, username, password, StandardCharsets.UTF_8);
     }
 
     /**
@@ -130,12 +108,12 @@ public class TomcatManager extends LoggedObject
      * @param password the password to use when authenticating with Tomcat manager
      * @param charset the URL encoding charset to use when communicating with Tomcat manager
      */
-    public TomcatManager(URL url, String username, String password, String charset)
+    public TomcatManager(URL url, String username, String password, Charset charset)
     {
         this.url = url;
         this.username = username;
         this.password = password;
-        this.charset = charset;
+        this.charset = charset.name();
     }
 
     /**
@@ -173,9 +151,9 @@ public class TomcatManager extends LoggedObject
      * 
      * @return the URL encoding charset to use when communicating with Tomcat manager
      */
-    public String getCharset()
+    public Charset getCharset()
     {
-        return this.charset;
+        return Charset.forName(this.charset);
     }
 
     /**
@@ -563,7 +541,7 @@ public class TomcatManager extends LoggedObject
         {
             connection.setRequestProperty("Authorization", digestData);
         }
-        else if (this.username != null)
+        else if (this.username != null && !this.username.isEmpty())
         {
             String authorization = toAuthorization(this.username, this.password);
             connection.setRequestProperty("Authorization", authorization);
@@ -590,7 +568,8 @@ public class TomcatManager extends LoggedObject
                 }
             }
 
-            response = toString(connection.getInputStream(), MANAGER_CHARSET);
+            Charset charset = extractCharset(connection.getContentType());
+            response = toString(connection.getInputStream(), charset);
         }
         catch (IOException e)
         {
@@ -643,7 +622,7 @@ public class TomcatManager extends LoggedObject
                         }
 
                         String ha1 = this.username + ":" + realm + ":" + this.password;
-                        byte[] hash = digest.digest(ha1.getBytes("UTF-8"));
+                        byte[] hash = digest.digest(ha1.getBytes(StandardCharsets.UTF_8));
                         StringBuilder sb = new StringBuilder();
                         for (byte hashByte : hash)
                         {
@@ -673,7 +652,7 @@ public class TomcatManager extends LoggedObject
                             ha2 = "PUT";
                         }
                         ha2 += ":" + uri;
-                        hash = digest.digest(ha2.getBytes("UTF-8"));
+                        hash = digest.digest(ha2.getBytes(StandardCharsets.UTF_8));
                         sb = new StringBuilder();
                         for (byte hashByte : hash)
                         {
@@ -697,7 +676,7 @@ public class TomcatManager extends LoggedObject
                         {
                             ha3 = ha1 + ":" + nonce + ":" + ha2;
                         }
-                        hash = digest.digest(ha3.getBytes("UTF-8"));
+                        hash = digest.digest(ha3.getBytes(StandardCharsets.UTF_8));
                         sb = new StringBuilder();
                         for (byte hashByte : hash)
                         {
@@ -794,6 +773,33 @@ public class TomcatManager extends LoggedObject
     }
 
     /**
+     * Extract charset from <code>Content-Type</code> header.
+     * 
+     * @param contentType <code>Content-Type</code> header.
+     * @return Character set extracted, UTF-8 if no valid charset found.
+     */
+    protected static Charset extractCharset(String contentType)
+    {
+        Charset charset = StandardCharsets.UTF_8;
+        if (contentType != null)
+        {
+            int charsetStart = contentType.indexOf("; charset=");
+            if (charsetStart > 0)
+            {
+                try
+                {
+                    charset = Charset.forName(contentType.substring(charsetStart + 10));
+                }
+                catch (Exception ignored)
+                {
+                    // Ignore parsing charset
+                }
+            }
+        }
+        return charset;
+    }
+
+    /**
      * Extract a component of a header.
      * 
      * @param header header to extract from
@@ -832,7 +838,7 @@ public class TomcatManager extends LoggedObject
         {
             buffer.append(password);
         }
-        return "Basic " + new String(Base64.encodeBase64(buffer.toString().getBytes()));
+        return "Basic " + Base64.encode(buffer.toString());
     }
 
     /**
@@ -843,7 +849,7 @@ public class TomcatManager extends LoggedObject
      * @return a string representation of the data read from the input stream
      * @throws IOException if an i/o error occurs
      */
-    private String toString(InputStream in, String charset) throws IOException
+    private String toString(InputStream in, Charset charset) throws IOException
     {
         InputStreamReader reader = new InputStreamReader(in, charset);
 

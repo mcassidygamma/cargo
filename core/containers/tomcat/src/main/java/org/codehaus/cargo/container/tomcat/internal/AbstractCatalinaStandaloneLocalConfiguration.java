@@ -20,6 +20,7 @@
 package org.codehaus.cargo.container.tomcat.internal;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,6 +58,25 @@ public abstract class AbstractCatalinaStandaloneLocalConfiguration extends
 {
 
     /**
+     * Default xpath expression for identifying the HTTP "Connector" element in the server.xml
+     * file.
+     */
+    private static final String CONNECTOR_XPATH =
+        "//Server/Service/Connector[not(@protocol) or @protocol='HTTP/1.1' "
+            + "or @protocol='org.apache.coyote.http11.Http11Protocol' "
+            + "or @protocol='org.apache.coyote.http11.Http11NioProtocol']";
+
+    /**
+     * Xpath expression template for identifying the HTTP "Connector" element in the server.xml
+     * file, when a custom protocol class is in use.
+     */
+    private static final String CONNECTOR_XPATH_TEMPLATE =
+            "//Server/Service/Connector[not(@protocol) or @protocol='HTTP/1.1' "
+                    + "or @protocol='org.apache.coyote.http11.Http11Protocol' "
+                    + "or @protocol='org.apache.coyote.http11.Http11NioProtocol' "
+                    + "or @protocol='%s']";
+
+    /**
      * {@inheritDoc}
      * @see AbstractStandaloneLocalConfigurationWithXMLConfigurationBuilder#AbstractStandaloneLocalConfigurationWithXMLConfigurationBuilder(String)
      */
@@ -69,7 +89,7 @@ public abstract class AbstractCatalinaStandaloneLocalConfiguration extends
         setProperty(TomcatPropertySet.AJP_PORT, "8009");
         setProperty(TomcatPropertySet.CONTEXT_RELOADABLE, "false");
         setProperty(TomcatPropertySet.COPY_WARS, "true");
-        setProperty(TomcatPropertySet.URI_ENCODING, "ISO-8859-1");
+        setProperty(TomcatPropertySet.URI_ENCODING, StandardCharsets.ISO_8859_1.name());
         setProperty(TomcatPropertySet.WEBAPPS_DIRECTORY, "webapps");
     }
 
@@ -123,25 +143,26 @@ public abstract class AbstractCatalinaStandaloneLocalConfiguration extends
         {
             String webXml = getFileHandler().append(confDir, "web.xml");
             getResourceUtils().copyResource(RESOURCE_PATH + container.getId() + "/web.xml", webXml,
-                getFileHandler(), emptyFilterChain, "UTF-8");
+                getFileHandler(), emptyFilterChain, StandardCharsets.UTF_8);
         }
 
         String tomcatUsersXml = getFileHandler().append(confDir, "tomcat-users.xml");
         getResourceUtils().copyResource(RESOURCE_PATH + "tomcat/tomcat-users.xml", tomcatUsersXml,
-            getFileHandler(), emptyFilterChain, "UTF-8");
+            getFileHandler(), emptyFilterChain, StandardCharsets.UTF_8);
         Map<String, String> replacements = new HashMap<String, String>(1);
         replacements.put("@tomcat.users@", getSecurityToken());
-        getFileHandler().replaceInFile(tomcatUsersXml, replacements, "UTF-8");
+        getFileHandler().replaceInFile(tomcatUsersXml, replacements, StandardCharsets.UTF_8);
         String loggingProperties = getFileHandler().append(confDir, "logging.properties");
         getResourceUtils().copyResource(RESOURCE_PATH + "tomcat/logging.properties",
-            loggingProperties, getFileHandler(), emptyFilterChain, "UTF-8");
+            loggingProperties, getFileHandler(), emptyFilterChain, StandardCharsets.ISO_8859_1);
         replacements.clear();
         replacements.put("@catalina.logging.level@",
             getTomcatLoggingLevel(getPropertyValue(GeneralPropertySet.LOGGING)));
-        getFileHandler().replaceInFile(loggingProperties, replacements, "UTF-8");
+        getFileHandler().replaceInFile(
+            loggingProperties, replacements, StandardCharsets.ISO_8859_1);
         getResourceUtils().copyResource(RESOURCE_PATH + "tomcat/context.xml",
             getFileHandler().append(confDir, "context.xml"), getFileHandler(),
-            createFilterChain(), "UTF-8");
+            createFilterChain(), StandardCharsets.UTF_8);
 
         setupManager(container);
 
@@ -437,5 +458,22 @@ public abstract class AbstractCatalinaStandaloneLocalConfiguration extends
     protected TomcatCopyingInstalledLocalDeployer createDeployer(LocalContainer container)
     {
         return new TomcatCopyingInstalledLocalDeployer(container);
+    }
+
+    /**
+     * XPath expression for identifying the "Connector" element in the server.xml file.
+     * <p>
+     * Handles the fact that this connector protocol value might have changed.
+     *
+     * @return the xpath expression for a http connector
+     */
+    protected String connectorXpath()
+    {
+        String protocolClass = getPropertyValue(TomcatPropertySet.CONNECTOR_PROTOCOL_CLASS);
+        if (protocolClass == null)
+        {
+            return CONNECTOR_XPATH;
+        }
+        return String.format(CONNECTOR_XPATH_TEMPLATE, protocolClass);
     }
 }

@@ -20,6 +20,7 @@
 package org.codehaus.cargo.container.tomcat;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -50,14 +51,6 @@ import org.w3c.dom.Element;
 public class Tomcat5xStandaloneLocalConfiguration extends
     AbstractCatalinaStandaloneLocalConfiguration
 {
-
-    /**
-     * XPath expression for identifying the "Connector" element in the server.xml file.
-     */
-    protected static final String CONNECTOR_XPATH =
-        "//Server/Service/Connector[not(@protocol) or @protocol='HTTP/1.1' "
-            + "or @protocol='org.apache.coyote.http11.Http11Protocol' "
-            + "or @protocol='org.apache.coyote.http11.Http11NioProtocol']";
 
     /**
      * {@inheritDoc}
@@ -130,6 +123,18 @@ public class Tomcat5xStandaloneLocalConfiguration extends
     @Override
     protected void performXmlReplacements(LocalContainer container)
     {
+        addXmlReplacement("conf/server.xml", connectorXpath(), "port", ServletPropertySet.PORT);
+        addXmlReplacement("conf/server.xml", connectorXpath(), "scheme",
+                GeneralPropertySet.PROTOCOL);
+        addXmlReplacement("conf/server.xml", connectorXpath(), "secure",
+                TomcatPropertySet.HTTP_SECURE);
+        addXmlReplacement("conf/server.xml", connectorXpath(), "emptySessionPath",
+                TomcatPropertySet.CONNECTOR_EMPTY_SESSION_PATH);
+        addXmlReplacement("conf/server.xml",
+                connectorXpath(),
+                "URIEncoding", TomcatPropertySet.URI_ENCODING);
+        addXmlReplacement("conf/server.xml", connectorXpath(), "port", ServletPropertySet.PORT);
+
         if (container instanceof EmbeddedLocalContainer)
         {
             // when running in the embedded mode, there's no need to replace files.
@@ -277,7 +282,7 @@ public class Tomcat5xStandaloneLocalConfiguration extends
     {
         Map<String, String> replacements = getCatalinaPropertertiesReplacements();
         getFileHandler().replaceInFile(getFileHandler().append(confDir, "catalina.properties"),
-            replacements, "UTF-8");
+            replacements, StandardCharsets.UTF_8);
 
         replacements.clear();
         replacements.put("</Host>", this.createTomcatWebappsToken()
@@ -289,7 +294,7 @@ public class Tomcat5xStandaloneLocalConfiguration extends
             + "\n               resolveHosts=\"false\"/>"
             + "\n      </Host>");
         getFileHandler().replaceInFile(getFileHandler().append(confDir, "server.xml"),
-            replacements, "UTF-8");
+            replacements, StandardCharsets.UTF_8);
     }
 
     /**
@@ -334,17 +339,6 @@ public class Tomcat5xStandaloneLocalConfiguration extends
     private void addXmlReplacements()
     {
         addXmlReplacement("conf/server.xml", "//Server", "port", GeneralPropertySet.RMI_PORT);
-        addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "port", ServletPropertySet.PORT);
-        addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "scheme",
-            GeneralPropertySet.PROTOCOL);
-        addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "secure",
-            TomcatPropertySet.HTTP_SECURE);
-        addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "emptySessionPath",
-            TomcatPropertySet.CONNECTOR_EMPTY_SESSION_PATH);
-        addXmlReplacement("conf/server.xml",
-            CONNECTOR_XPATH,
-                    "URIEncoding", TomcatPropertySet.URI_ENCODING);
-        addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "port", ServletPropertySet.PORT);
         addXmlReplacement("conf/server.xml",
             "//Server/Service/Connector[@protocol='AJP/1.3']", "port", TomcatPropertySet.AJP_PORT,
             XmlReplacement.ReplacementBehavior.IGNORE_IF_NON_EXISTING);
@@ -359,7 +353,7 @@ public class Tomcat5xStandaloneLocalConfiguration extends
     /**
      * Adds optional XML replacements that can only be determined with the
      * actual configuration being used to perform the replacements.
-     * 
+     *
      * @param container
      *            the container, with configuration properties, used to
      *            determine if the optional replacements are needed
@@ -369,7 +363,7 @@ public class Tomcat5xStandaloneLocalConfiguration extends
         if (!"localhost".equals(container.getConfiguration().getPropertyValue(
             GeneralPropertySet.HOSTNAME)))
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "address",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "address",
                 GeneralPropertySet.HOSTNAME);
             addXmlReplacement("conf/server.xml", "//Server/Service/Connector[@protocol='AJP/1.3']",
                 "address", GeneralPropertySet.HOSTNAME,
@@ -386,70 +380,70 @@ public class Tomcat5xStandaloneLocalConfiguration extends
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_KEY_STORE_FILE) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "keystoreFile",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "keystoreFile",
                 TomcatPropertySet.CONNECTOR_KEY_STORE_FILE);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_KEY_STORE_PASSWORD) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "keystorePass",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "keystorePass",
                 TomcatPropertySet.CONNECTOR_KEY_STORE_PASSWORD);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_KEY_STORE_TYPE) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "keystoreType",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "keystoreType",
                 TomcatPropertySet.CONNECTOR_KEY_STORE_TYPE);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_KEY_ALIAS) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "keyAlias",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "keyAlias",
                 TomcatPropertySet.CONNECTOR_KEY_ALIAS);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_CLIENT_AUTH) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "clientAuth",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "clientAuth",
                 TomcatPropertySet.CONNECTOR_CLIENT_AUTH);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_TRUST_STORE_FILE) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "truststoreFile",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "truststoreFile",
                 TomcatPropertySet.CONNECTOR_TRUST_STORE_FILE);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_TRUST_STORE_PASSWORD) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "truststorePass",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "truststorePass",
                 TomcatPropertySet.CONNECTOR_TRUST_STORE_PASSWORD);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_TRUST_STORE_TYPE) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "truststoreType",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "truststoreType",
                 TomcatPropertySet.CONNECTOR_TRUST_STORE_TYPE);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_SSL_PROTOCOL) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "sslProtocol",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "sslProtocol",
                 TomcatPropertySet.CONNECTOR_SSL_PROTOCOL);
         }
 
         if (container.getConfiguration().getPropertyValue(
             TomcatPropertySet.CONNECTOR_MAX_HTTP_HEADER_SIZE) != null)
         {
-            addXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "maxHttpHeaderSize",
+            addXmlReplacement("conf/server.xml", connectorXpath(), "maxHttpHeaderSize",
                 TomcatPropertySet.CONNECTOR_MAX_HTTP_HEADER_SIZE);
         }
     }

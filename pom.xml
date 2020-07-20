@@ -20,7 +20,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.codehaus.cargo</groupId>
   <artifactId>codehaus-cargo</artifactId>
-  <version>1.7.14-SNAPSHOT</version>
+  <version>1.7.16-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Codehaus Cargo</name>
@@ -850,12 +850,6 @@
         <groupId>com.mchange</groupId>
         <artifactId>mchange-commons-java</artifactId>
         <version>0.2.20</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>1.13</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>commons-discovery</groupId>

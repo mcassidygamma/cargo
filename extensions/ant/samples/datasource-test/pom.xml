@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.codehaus.cargo</groupId>
     <artifactId>cargo-samples-ant</artifactId>
-    <version>1.7.14-SNAPSHOT</version>
+    <version>1.7.16-SNAPSHOT</version>
   </parent>
   <artifactId>cargo-sample-ant-datasource-test</artifactId>
   <name>Cargo Samples - ANT - Datasource test</name>
@@ -41,6 +41,7 @@
               <goal>copy</goal>
             </goals>
             <configuration>
+              <skip>${skipTests}</skip>
               <outputDirectory>${cargo-test-applications.directory}</outputDirectory>
               <artifactItems>
                 <artifactItem>
@@ -68,6 +69,7 @@
               <goal>run</goal>
             </goals>
             <configuration>
+              <skip>${skipTests}</skip>
               <target>
                 <!-- Avoid CARGO-827: Cannot build on Windows -->
                 <replace file="${cargo-ant-buildfiles.directory}/build.xml">
@@ -88,6 +90,7 @@
               <goal>run</goal>
             </goals>
             <configuration>
+              <skip>${skipTests}</skip>
               <target>
                 <ant antfile="${cargo-ant-buildfiles.directory}/build.xml">
                   <target name="stop" />

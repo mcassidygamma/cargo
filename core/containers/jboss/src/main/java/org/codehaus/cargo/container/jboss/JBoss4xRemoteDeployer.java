@@ -26,6 +26,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 
 import org.codehaus.cargo.container.ContainerException;
 import org.codehaus.cargo.container.RemoteContainer;
@@ -310,18 +311,15 @@ public class JBoss4xRemoteDeployer extends AbstractRemoteDeployer
      */
     private String encodeURLLocation(URL url)
     {
-        String encodedString;
-
+        // TODO: URLEncoder.encode(String, Charset) was introduced in Java 10,
+        //       simplify the below code when Codehaus Cargo is on Java 10+
         try
         {
-            encodedString = URLEncoder.encode(url.toExternalForm(), "UTF-8");
+            return URLEncoder.encode(url.toExternalForm(), StandardCharsets.UTF_8.name());
         }
         catch (UnsupportedEncodingException e)
         {
-            throw new ContainerException("Failed to encode Deployable location [" + url
-                + "] using an [UTF-8] encoding", e);
+            throw new IllegalStateException("UTF-8 encoding is missing", e);
         }
-
-        return encodedString;
     }
 }

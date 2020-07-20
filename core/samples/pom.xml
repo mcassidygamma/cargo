@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.codehaus.cargo</groupId>
     <artifactId>cargo-core</artifactId>
-    <version>1.7.14-SNAPSHOT</version>
+    <version>1.7.16-SNAPSHOT</version>
   </parent>
   <artifactId>cargo-samples</artifactId>
   <packaging>pom</packaging>
@@ -67,11 +67,12 @@
             <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
 
             <systemProperties>
-
               <!--
-                Surefire 2.4.3 requires you to pass properties explicitly.
+                As we run the tests in their separately forked JVMs, the associated properties must
+                be passed explicitly. If you're behind a proxy, set this here.
 
-                If you're behind a proxy, set this here
+                Alternatively, you can set the cargo.proxy.* variables in your settings.xml.
+                Scroll further down in this file to learn how!
 
               <property>
                 <name>http.proxyHost</name>
@@ -416,7 +417,7 @@
 
               <property>
                 <name>cargo.jetty4x.url</name>
-                <value>ftp://ftp.fi.freebsd.org/pub/FreeBSD/ports/distfiles/jetty-4.2.20-all.tar.gz</value>
+                <value>http://web.archive.org/web/20150506141956if_/http://dist.codehaus.org/jetty/jetty-4.2.x/jetty-4.2.27.zip</value>
               </property>
               <property>
                 <name>cargo.jetty4x.java.home</name>
@@ -425,7 +426,7 @@
 
               <property>
                 <name>cargo.jetty5x.url</name>
-                <value>ftp://ftp.fi.freebsd.org/pub/FreeBSD/ports/distfiles/jetty-5.1.15.tgz</value>
+                <value>http://web.archive.org/web/20150506142403if_/http://dist.codehaus.org/jetty/jetty-5.1.x/jetty-5.1.15.tgz</value>
               </property>
               <property>
                 <name>cargo.jetty5x.java.home</name>
@@ -434,7 +435,7 @@
 
               <property>
                 <name>cargo.jetty6x.url</name>
-                <value>ftp://ftp.fi.freebsd.org/pub/FreeBSD/ports/distfiles/jetty-6.1.26.zip</value>
+                <value>http://web.archive.org/web/20150506142907if_/http://dist.codehaus.org/jetty/jetty-6.1.26/jetty-6.1.26.zip</value>
               </property>
               <property>
                 <name>cargo.jetty6x.java.home</name>
@@ -807,7 +808,7 @@
 
               <property>
                 <name>cargo.tomcat7x.url</name>
-                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/7.0.104/tomcat-7.0.104.zip</value>
+                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/7.0.105/tomcat-7.0.105.zip</value>
               </property>
               <property>
                 <name>cargo.tomcat7x.java.home</name>
@@ -819,7 +820,7 @@
                 <!--
                 <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/8.0.53/tomcat-8.0.53.zip</value>
                   -->
-                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/8.5.56/tomcat-8.5.56.zip</value>
+                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/8.5.57/tomcat-8.5.57.zip</value>
               </property>
               <property>
                 <name>cargo.tomcat8x.java.home</name>
@@ -828,7 +829,7 @@
 
               <property>
                 <name>cargo.tomcat9x.url</name>
-                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/9.0.36/tomcat-9.0.36.zip</value>
+                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/9.0.37/tomcat-9.0.37.zip</value>
               </property>
               <property>
                 <name>cargo.tomcat9x.java.home</name>
@@ -837,7 +838,7 @@
 
               <property>
                 <name>cargo.tomcat10x.url</name>
-                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/10.0.0-M6/tomcat-10.0.0-M6.zip</value>
+                <value>https://repo.maven.apache.org/maven2/org/apache/tomcat/tomcat/10.0.0-M7/tomcat-10.0.0-M7.zip</value>
               </property>
               <property>
                 <name>cargo.tomcat10x.java.home</name>

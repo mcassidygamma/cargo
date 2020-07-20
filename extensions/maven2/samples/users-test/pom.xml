@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.codehaus.cargo</groupId>
     <artifactId>cargo-samples-maven2</artifactId>
-    <version>1.7.14-SNAPSHOT</version>
+    <version>1.7.16-SNAPSHOT</version>
   </parent>
   <artifactId>cargo-sample-maven2-users-test</artifactId>
   <name>Cargo Samples - Maven 2 - Users test</name>
@@ -38,11 +38,6 @@
       <groupId>org.codehaus.cargo</groupId>
       <artifactId>authentication-war</artifactId>
       <type>war</type>
-    </dependency>
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -67,7 +62,7 @@
                 <artifactInstaller>
                   <groupId>org.apache.tomcat</groupId>
                   <artifactId>tomcat</artifactId>
-                  <version>8.5.56</version>
+                  <version>8.5.57</version>
                 </artifactInstaller>
               </container>
               <configuration>

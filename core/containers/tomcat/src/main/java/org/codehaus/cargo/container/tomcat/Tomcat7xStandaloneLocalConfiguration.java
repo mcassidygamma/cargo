@@ -19,6 +19,7 @@
  */
 package org.codehaus.cargo.container.tomcat;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -66,7 +67,6 @@ public class Tomcat7xStandaloneLocalConfiguration extends Tomcat6xStandaloneLoca
 
         // CARGO-1271: Starting Tomcat 7 with Cargo logs warning on emptySessionPath
         getProperties().remove(TomcatPropertySet.CONNECTOR_EMPTY_SESSION_PATH);
-        removeXmlReplacement("conf/server.xml", CONNECTOR_XPATH, "emptySessionPath");
     }
 
     /**
@@ -98,13 +98,13 @@ public class Tomcat7xStandaloneLocalConfiguration extends Tomcat6xStandaloneLoca
     {
         Map<String, String> replacements = getCatalinaPropertertiesReplacements();
         getFileHandler().replaceInFile(getFileHandler().append(confDir, "catalina.properties"),
-            replacements, "UTF-8");
+            replacements, StandardCharsets.UTF_8);
 
         replacements.clear();
         replacements.put("</Host>", this.createTomcatWebappsToken()
             + "\n      </Host>");
         getFileHandler().replaceInFile(getFileHandler().append(confDir, "server.xml"),
-            replacements, "UTF-8");
+            replacements, StandardCharsets.UTF_8);
 
         // Add custom Valves
         for (Map.Entry<String, String> property : getProperties().entrySet())
@@ -131,7 +131,7 @@ public class Tomcat7xStandaloneLocalConfiguration extends Tomcat6xStandaloneLoca
                 replacements.put("</Host>", replacement.toString());
 
                 getFileHandler().replaceInFile(getFileHandler().append(confDir, "server.xml"),
-                        replacements, "UTF-8");
+                    replacements, StandardCharsets.UTF_8);
             }
         }
     }
@@ -153,6 +153,8 @@ public class Tomcat7xStandaloneLocalConfiguration extends Tomcat6xStandaloneLoca
     protected void performXmlReplacements(LocalContainer container)
     {
         String serverXmlFileName = "conf/server.xml";
+
+        removeXmlReplacement(serverXmlFileName, connectorXpath(), "emptySessionPath");
 
         String startStopThreads = getPropertyValue(TomcatPropertySet.HOST_STARTSTOPTHREADS);
         if (startStopThreads != null)
